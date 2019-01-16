@@ -25,7 +25,7 @@
         @blur.native="closeEditing"
         @keydown.native="operateKeyDown"
       ></textarea-autosize>
-      <div class="comment-props row">
+      <div class="comment-props row" v-if="isLoggedIn">
         <div class="comment-props-answer">
           <span @click="$emit('answer', comment.username.name, comment.username.id)">Ответить</span>
         </div>
@@ -91,6 +91,7 @@ export default {
   },
   computed: {
     ...mapGetters({
+	  isLoggedIn: 'isLoggedIn',
       isMyProfileId: 'isMyProfileId',
       isUpdPending: 'isCurrentTopicUpdCommentPending',
     }),
