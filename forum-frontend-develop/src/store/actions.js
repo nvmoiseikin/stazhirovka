@@ -1,5 +1,7 @@
 export const AUTH_LOGIN = 'AUTH_LOGIN';
 export const AUTH_LOGOUT = 'AUTH_LOGOUT';
+export const SET_AUTH_REFRESH = 'SET_AUTH_REFRESH'
+export const TOKEN_REFRESH = 'TOKEN_REFRESH'
 
 export const PROFILE_LOAD = 'PROFILE_LOAD';
 export const PROFILE_CLEAR = 'PROFILE_CLEAR';
