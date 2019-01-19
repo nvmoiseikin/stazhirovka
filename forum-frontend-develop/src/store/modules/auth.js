@@ -2,7 +2,7 @@
 /* eslint-disable no-param-reassign */
 import Vue from 'vue';
 import { AUTH_LOGIN, AUTH_LOGOUT, SET_AUTH_REFRESH, TOKEN_REFRESH, PROFILE_LOAD, PROFILE_CLEAR } from '../actions';
-import { getToken, setToken, removeToken, getTokenRefreshDate, setTokenDate, removeTokenDate} from '../../utils/token';
+import { getToken, setToken, removeToken, setTokenRefreshDate, getTokenRefreshDate, removeTokenDate} from '../../utils/token';
 
 const AUTH_REQUEST_MUT = 'AUTH_REQUEST_MUT';
 const AUTH_SUCCESS_MUT = 'AUTH_SUCCESS_MUT';
@@ -59,6 +59,9 @@ const actions = {
         setToken(token);
         commit(AUTH_SUCCESS_MUT, token);
         dispatch(PROFILE_LOAD);
+		setTokenRefreshDate(new Date().getTime());
+		
+		dispatch(SET_AUTH_REFRESH);
         return response;
       })
       .catch((err) => {
@@ -68,49 +71,45 @@ const actions = {
   },
   [SET_AUTH_REFRESH]: ({dispatch}) => {
 	  
-	 let token_date = getTokenDate();
-	 let time_to_refresh = token_date - this.current;
+	 let token_date = getTokenRefreshDate();
+	 var time_to_refresh = token_date - new Date().getTime();
 	 
-	 if (time_to_refresh < 0 || !time_to_refresh) {
+	 if (time_to_refresh < 0) {
 		 dispatch(AUTH_LOGOUT);
 	 } else {
-		 let token = getToken();
-		setTimeout((dispatch) => dispatch(TOKEN_REFRESH(token)), time_to_refresh));
+		var timer = setTimeout(() => dispatch(TOKEN_REFRESH), time_to_refresh);
 	 }
   },
-  [TOKEN_REFRESH]: ({getters}) => {
+  [TOKEN_REFRESH]: ({getters, commit, dispatch}) => {
+	if (!getters.isAuthBlocked && getters.isLoggedIn && getTokenRefreshDate() <= new Date().getTime()){
+		commit(AUTH_REQUEST_MUT);
 	  
-	  commit(AUTH_REQUEST_MUT);
-	  
-	  return Vue.axios.post('users/refresh', { Headers: this.getters.authHeaderValue } ) 
-      .then((response) => {
-        if (response.status !== 200) {
-          throw new Error(`Some netwotk problem, response status: ${response.status}`);
-        }
-        const token = response.data.access_token;
-        
-		commit(AUTH_SUCCESS_MUT, token);
-		dispatch("SAVE_TOKEN");
-		
-        return response;
-      })
-      .catch((err) => {
-        commit(AUTH_ERROR_MUT, err.message);
-        throw new Error(err.message);
-      });
-	},
+		return Vue.axios.post('users/refresh', { Headers: getters.authHeaderValue } ) 
+		.then((response) => {
+			if (response.status !== 200) {
+			throw new Error(`Some netwotk problem, response status: ${response.status}`);
+			}
+			const token = response.data.access_token;
+			commit(AUTH_SUCCESS_MUT, token);
+			setToken(token);
+			setTokenRefreshDate(new Date().getTime());
+			dispatch(PROFILE_LOAD);
+			
+			dispatch(SET_AUTH_REFRESH);
+			return response;
+		})
+		.catch((err) => {
+			commit(AUTH_ERROR_MUT, err.message);
+			throw new Error(err.message);
+		});
+	}
+  },
   [AUTH_LOGOUT]: ({ commit, dispatch }) => {
     commit(AUTH_LOGOUT_MUT);
     commit(AUTH_CLEAR_MUT);
     dispatch(PROFILE_CLEAR);
     removeToken();
 	removeTokenDate();
-  },
-  SAVE_TOKEN: ({dispatch, getters}) => {
-	token = this.getters.authHeaderValue;
-	setToken(token);
-	setTokenDate(this.current);
-    dispatch(PROFILE_LOAD);
   },
 };
 

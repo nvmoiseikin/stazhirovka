@@ -8,9 +8,9 @@ export const removeToken = () => localStorage.removeItem(TOKEN_NAME);
 
 const TOKEN_DATE = 'user-token-date';
 
-export const TOKEN_TIME = 6000;
+export const TOKEN_TIME = 60000;
 
-export const getTokenDate = () => localStorage.getItem(TOKEN_DATE);
+export const getTokenRefreshDate = () => localStorage.getItem(TOKEN_DATE);
 
 export const setTokenRefreshDate = token_date => localStorage.setItem(TOKEN_DATE, (token_date + TOKEN_TIME));
 
